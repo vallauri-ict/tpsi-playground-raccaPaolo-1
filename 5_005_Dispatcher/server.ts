@@ -17,3 +17,9 @@ dispatcher.addListener("POST", "/api/servizio1", (req, res) => {
     //  se c'è un solo write posso metterla dentro end
     res.end(JSON.stringify({res:'OK'}));
 });
+
+dispatcher.addListener("GET", "/api/servizio2", (req, res) => {
+    res.writeHead(200,HEADERS.json);
+    //  se c'è un solo write posso metterla dentro end
+    res.end(JSON.stringify({res:req.GET.nome}));
+});

@@ -2,6 +2,7 @@ import * as http from "http";
 import * as url from "url";
 import * as fs from "fs";
 import * as mime from "mime";
+import * as querystring from "query-string";
 
 const HEADERS = require("./headers.json");
 let paginaErrore: string;
@@ -24,29 +25,53 @@ class Dispatcher {
       throw new Error("Invalid method");
     }
   }
-
   dispatch(req: http.IncomingMessage, res: http.ServerResponse): void {
-    let method = req.method;
-    let reqUrl = url.parse(req.url, true);
-    let resource = reqUrl.pathname;
-    let parameters = reqUrl.query;
-    console.log(
-      `${this.prompt} ${method}: ${resource} {${JSON.stringify(parameters)}}`
-    );
-
-    if (resource.startsWith("/api/")) {
-      if (resource in this.listeners[method]) {
-        let callback = this.listeners[method][resource];
-        //  lancio in esecuzione la callback
-        callback(req, res);
-      } else {
-        res.writeHead(404, HEADERS.text);
-        res.write("Servizio non trovato");
-        res.end();
-      }
-    } else {
-      staticListener(req, res, resource);
+    let method = req.method.toUpperCase();
+    if (method === "GET") innerDispatch(req, res);
+    else {
+      let bodyParams: string | object = "";
+      req.on("data", function (data) {
+        bodyParams = (bodyParams as string).concat(data);
+      });
+      let parsedParams = {};
+      req.on("end", function () {
+        //  se i parametri sono JSON, va a buon fine, altrimenti passo nel catch (URL-ENCODED)
+        try {
+          bodyParams = JSON.parse(bodyParams as string);
+        } catch (error) {
+          bodyParams = querystring.parse(bodyParams as string);
+        }
+      });
     }
+  }
+}
+
+function innerDispatch(
+  req: http.IncomingMessage,
+  res: http.ServerResponse
+): void {
+  let method = req.method;
+  let reqUrl = url.parse(req.url, true);
+  let resource = reqUrl.pathname;
+  let parameters = reqUrl.query;
+  req["GET"] = parameters;
+
+  console.log(
+    `${this.prompt} ${method}: ${resource} {${JSON.stringify(parameters)}}`
+  );
+
+  if (resource.startsWith("/api/")) {
+    if (resource in this.listeners[method]) {
+      let callback = this.listeners[method][resource];
+      //  lancio in esecuzione la callback
+      callback(req, res);
+    } else {
+      res.writeHead(404, HEADERS.text);
+      res.write("Servizio non trovato");
+      res.end();
+    }
+  } else {
+    staticListener(req, res, resource);
   }
 }
 
@@ -68,7 +93,7 @@ function staticListener(
   if (resource == "/") {
     resource = "/index.html";
   }
-  resource = ("./static").concat(resource);
+  resource = "./static".concat(resource);
   let data = fs.readFile(resource, (error, data) => {
     if (!error) {
       res.writeHead(200, { "Content-Type": mime.getType(resource) });
