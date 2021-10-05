@@ -33,7 +33,6 @@ class Dispatcher {
       req.on("data", function (data) {
         bodyParams = (bodyParams as string).concat(data);
       });
-      let parsedParams = {};
       req.on("end", function () {
         //  se i parametri sono JSON, va a buon fine, altrimenti passo nel catch (URL-ENCODED)
         try {
