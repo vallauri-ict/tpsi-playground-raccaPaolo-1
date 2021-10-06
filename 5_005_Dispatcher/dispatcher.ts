@@ -27,50 +27,54 @@ class Dispatcher {
   }
   dispatch(req: http.IncomingMessage, res: http.ServerResponse): void {
     let method = req.method.toUpperCase();
-    if (method === "GET") innerDispatch(req, res);
+    if (method === "GET") this.innerDispatch(req, res);
     else {
       let bodyParams: string | object = "";
       req.on("data", function (data) {
         bodyParams = (bodyParams as string).concat(data);
       });
-      req.on("end", function () {
+      req.on("end", () => {
         //  se i parametri sono JSON, va a buon fine, altrimenti passo nel catch (URL-ENCODED)
         try {
           bodyParams = JSON.parse(bodyParams as string);
         } catch (error) {
           bodyParams = querystring.parse(bodyParams as string);
+        } finally {
+          //  richiamato in entrambi i casi
+          req["BODY"] = bodyParams;
+          this.innerDispatch(req, res);
         }
       });
     }
   }
-}
+  innerDispatch(req: http.IncomingMessage, res: http.ServerResponse): void {
+    let method = req.method;
+    let reqUrl = url.parse(req.url, true);
+    let resource = reqUrl.pathname;
+    let parameters = reqUrl.query;
+    req["GET"] = parameters;
 
-function innerDispatch(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): void {
-  let method = req.method;
-  let reqUrl = url.parse(req.url, true);
-  let resource = reqUrl.pathname;
-  let parameters = reqUrl.query;
-  req["GET"] = parameters;
+    console.log(
+      req["BODY"]
+        ? `${this.prompt} ${method}: ${resource} ${JSON.stringify(
+            parameters
+          )} ${JSON.stringify(req["BODY"])}`
+        : `${this.prompt} ${method}: ${resource} ${JSON.stringify(parameters)}`
+    );
 
-  console.log(
-    `${this.prompt} ${method}: ${resource} {${JSON.stringify(parameters)}}`
-  );
-
-  if (resource.startsWith("/api/")) {
-    if (resource in this.listeners[method]) {
-      let callback = this.listeners[method][resource];
-      //  lancio in esecuzione la callback
-      callback(req, res);
+    if (resource.startsWith("/api/")) {
+      if (resource in this.listeners[method]) {
+        let callback = this.listeners[method][resource];
+        //  lancio in esecuzione la callback
+        callback(req, res);
+      } else {
+        res.writeHead(404, HEADERS.text);
+        res.write("Servizio non trovato");
+        res.end();
+      }
     } else {
-      res.writeHead(404, HEADERS.text);
-      res.write("Servizio non trovato");
-      res.end();
+      staticListener(req, res, resource);
     }
-  } else {
-    staticListener(req, res, resource);
   }
 }
 

@@ -15,7 +15,7 @@ console.log(`Server in ascolto sulla porta: ${PORT}`);
 dispatcher.addListener("POST", "/api/servizio1", (req, res) => {
     res.writeHead(200,HEADERS.json);
     //  se c'è un solo write posso metterla dentro end
-    res.end(JSON.stringify({res:'OK'}));
+    res.end(JSON.stringify({res:req.BODY.nome, id:req['GET'].id}));
 });
 
 dispatcher.addListener("GET", "/api/servizio2", (req, res) => {
