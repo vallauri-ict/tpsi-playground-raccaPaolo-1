@@ -11,7 +11,39 @@ $(document).ready(function () {
   reqNazioni.done(({ nations }) => {
     console.log(nations);
     for (const item of nations) {
-      let tr = $()
+      let a = $("<a>", {
+        class: "dropdown-item",
+        href: "#",
+        text: item,
+        click: visualizzaPersone,
+      });
+      _lstNazioni.append(a);
     }
   });
+
+  function visualizzaPersone() {
+    let nation = $(this).text();
+    let reqPeople = inviaRichiesta("GET", "/api/getPeople", { nation: nation });
+    reqPeople.fail(errore);
+    reqPeople.done((data) => {
+      console.log(data);
+      _tabStudenti.empty();
+      data.map((person) => {
+        let tr = $("<tr>");
+        for (const key in person) {
+          tr.append($("<td>", { text: person[key] }));
+        }
+
+        tr.append(
+          $("<td>").append(
+            $("<button>", { text: "Dettagli" })
+          )
+        );
+        tr.append(
+          $("<td>").append($("<button>", { text: "Elimina" }))
+        );
+        tr.appendTo(_tabStudenti);
+      });
+    });
+  }
 });
