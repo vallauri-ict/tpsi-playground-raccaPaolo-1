@@ -3,11 +3,10 @@ import * as url from "url";
 import * as fs from "fs";
 import * as mime from "mime";
 import * as querystring from "query-string";
-
-const HEADERS = require("./headers.json");
+import HEADERS from "./headers.json";
 let paginaErrore: string;
 
-class Dispatcher {
+export class Dispatcher {
   prompt: string = ">>> ";
   //listener = json con chiave = risorsa e valore = la callback da effettuare, suddivisi per metodo di chiamata
   listeners: any = { GET: {}, POST: {}, DELETE: {}, PATCH: {}, PUT: {} };
@@ -111,4 +110,4 @@ function staticListener(
   });
 }
 
-module.exports = new Dispatcher();
+//  module.exports = new Dispatcher();
