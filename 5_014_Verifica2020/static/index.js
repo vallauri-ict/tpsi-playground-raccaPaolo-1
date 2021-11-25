@@ -9,6 +9,18 @@ $(document).ready(function () {
     request.fail(errore);
     request.done(function (data) {
       alert(JSON.stringify(data));
+      let body = $("#dataEnd").parent();
+      let _table = $("<table>");
+      body.append(_table);
+      for (const item of data) {
+        let _tr = $("<tr>");
+        _table.append(_tr);
+        for (const key in item) {
+          const element = item[key];
+          _tr.append($("<td>").html(element));
+        }
+      }
+      // $("td").css({ border: "1px solid black;" });
     });
   });
 });
