@@ -1,7 +1,9 @@
 import * as mongodb from "mongodb";
 
 const mongoClient = mongodb.MongoClient;
-const CONNECTION_STRING = "mongodb://127.0.0.1:27017";
+// const CONNECTION_STRING = "mongodb://127.0.0.1:27017";
+const CONNECTION_STRING =
+  "mongodb+srv://admin:admin@cluster0.niwz6.mongodb.net/5B?retryWrites=true&w=majority";
 const DB_NAME = "5B";
 
 //query 1
