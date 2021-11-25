@@ -278,3 +278,99 @@ mongoClient.connect(CONNECTION_STRING, (err, client) => {
     console.log("Errore connessione al db: " + err.message);
   }
 });
+
+//  query 11
+mongoClient.connect(CONNECTION_STRING, (err, client) => {
+  if (!err) {
+    let db = client.db(DB_NAME);
+    db.collection("unicorns")
+      .aggregate([
+        {
+          $match: {
+            loves: { $in: ["apple"] },
+            gender: { $exists: true },
+          },
+        },
+        {
+          $group: {
+            _id: "$gender",
+            vampiri: { $sum: "$vampires" },
+          },
+        },
+      ])
+      .toArray()
+      .then((data) => console.log("Query 11", data))
+      .catch((err) => console.log("Errore esecuzione query: " + err.message))
+      .finally(() => client.close());
+  } else {
+    console.log("Errore connessione al db: " + err.message);
+  }
+});
+
+//  query 12
+mongoClient.connect(CONNECTION_STRING, (err, client) => {
+  if (!err) {
+    let db = client.db(DB_NAME);
+    db.collection("unicorns")
+      .aggregate([
+        {
+          $unwind: "$loves",
+        },
+        {
+          $group: {
+            _id: "$loves",
+            cont: { $count: {} },
+          },
+        },
+        {
+          $sort: {
+            cont: -1,
+          },
+        },
+      ])
+      .toArray()
+      .then((data) => console.log("Query 11", data))
+      .catch((err) => console.log("Errore esecuzione query: " + err.message))
+      .finally(() => client.close());
+  } else {
+    console.log("Errore connessione al db: " + err.message);
+  }
+});
+
+//  query 13
+mongoClient.connect(CONNECTION_STRING, (err, client) => {
+  if (!err) {
+    let db = client.db(DB_NAME);
+    db.collection("students")
+      .aggregate([
+        {
+          $project: {
+            classe: 1,
+            mediaVoti: { $avg: "$voti" },
+          },
+        },
+        {
+          $group: {
+            _id: "$classe",
+            mediaClasse: { $avg: "$mediaVoti" },
+          },
+        },
+        {
+          $match: {
+            mediaClasse: { $gte: 6 },
+          },
+        },
+        {
+          $sort: {
+            mediaClasse: -1,
+          },
+        },
+      ])
+      .toArray()
+      .then((data) => console.log("Query 11", data))
+      .catch((err) => console.log("Errore esecuzione query: " + err.message))
+      .finally(() => client.close());
+  } else {
+    console.log("Errore connessione al db: " + err.message);
+  }
+});
