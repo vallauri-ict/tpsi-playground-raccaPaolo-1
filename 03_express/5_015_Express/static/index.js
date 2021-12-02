@@ -1,19 +1,30 @@
 $(document).ready(function () {
   $("#btnInvia").on("click", function () {
-    let request = inviaRichiesta("post", "/api/servizio1?id=5", {
-      nome: "pippo",
-    });
+    let request = inviaRichiesta("get", "/api/risorsa1", { name: "Aurora" });
     request.fail(errore);
     request.done(function (data) {
-      alert(JSON.stringify(data));
+      if (data.lenght > 0) alert(JSON.stringify(data));
+      else alert("Nessuna corrispondenza trovata");
     });
   });
 
   $("#btnInvia2").on("click", function () {
-    let request = inviaRichiesta("get", "/api/servizio2", { nome: "pippo" });
+    let request = inviaRichiesta("patch", "/api/risorsa1", {
+      nome: "Unico",
+      vampires: 3,
+    });
     request.fail(errore);
     request.done(function (data) {
-      alert(JSON.stringify(data));
+      if (data.modifiedCount > 0) alert("Aggiornamento eseguito correttamente");
+      else alert("Nessuna corrispondeza trovata");
+    });
+  });
+
+  $("#btnParamRes").on("click", function () {
+    let request = inviaRichiesta("get", `/api/risorsa3/m/brown`);
+    request.fail(errore);
+    request.done(function (data) {
+      console.log(data);
     });
   });
 
