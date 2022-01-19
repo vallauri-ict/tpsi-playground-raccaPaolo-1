@@ -9,13 +9,16 @@ import cors from "cors";
 
 //#region mongoDB
 const mongoClient = mongodb.MongoClient;
-// const CONNECTION_STRING = "mongodb://127.0.0.1:27017";
 const CONNECTION_STRING =
+  process.env.MONGODB_URI ||
   "mongodb+srv://admin:admin@cluster0.niwz6.mongodb.net/5B?retryWrites=true&w=majority";
+// const CONNECTION_STRING = "mongodb://127.0.0.1:27017";
+// const CONNECTION_STRING =
+//   "mongodb+srv://admin:admin@cluster0.niwz6.mongodb.net/5B?retryWrites=true&w=majority";
 const DB_NAME = "recipeBook";
 //#endregion
 
-const PORT: number = 1337;
+const PORT: number = parseInt(process.env.PORT) || 1337;
 const app = express();
 
 const server = http.createServer(app);
@@ -69,7 +72,11 @@ app.use("/", (req, res, next) => {
 });
 
 //  6. Middleware cors
-const whitelist = ["http://localhost:4200", "https://localhost:1337"];
+const whitelist = [
+  "http://localhost:4200",
+  "http://localhost:1337",
+  "https://raccapaolo-crudserver.herokuapp.com",
+];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
