@@ -73,9 +73,10 @@ app.use("/", (req, res, next) => {
 
 //  6. Middleware cors
 const whitelist = [
-  "http://localhost:4200",
-  "http://localhost:1337",
   "https://raccapaolo-crudserver.herokuapp.com",
+  "http://raccapaolo-crudserver.herokuapp.com",
+  "http://localhost:1337",
+  "http://localhost:4200",
 ];
 const corsOptions = {
   origin: function (origin, callback) {
