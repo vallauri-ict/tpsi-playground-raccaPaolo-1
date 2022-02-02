@@ -5,6 +5,7 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import * as mongodb from "mongodb";
 import cors, { CorsOptions } from "cors";
+import fileUpload, { UploadedFile } from "express-fileupload";
 //#endregion
 
 //#region mongoDB
@@ -92,19 +93,18 @@ const corsOptions: CorsOptions = {
 };
 app.use("/", cors(corsOptions));
 
+//  7. Controllo dimensione dei file
+app.use(
+  fileUpload({
+    limits: { fileSize: 10 * 1024 * 1024 }, //  10MB
+  })
+);
+
 /*  ******************************************
     elenco delle routes di risposta al client
     ****************************************** */
 
-//  middleware di intercettazione dei parametri
 let currentCollection: string = "images";
-let id: string = "";
-
-app.use("/api/:collection/:id?", (req, res, next) => {
-  currentCollection = req.params.collection;
-  id = req.params.id;
-  next();
-});
 
 //  listener specifici
 app.get("/api/images", (req, res, next) => {
@@ -118,11 +118,39 @@ app.get("/api/images", (req, res, next) => {
     .finally(() => req["client"].close());
 });
 
-app.post("/api/*", (req, res, next) => {
+app.post("/api/uploadBinary", (req, res, next) => {
+  let db = req["client"].db(DB_NAME) as mongodb.Db;
+  if (
+    !req.files ||
+    Object.keys(req.files).length === 0 ||
+    !req.body["username"]
+  )
+    //  parametri "normali" vengono inseriti nel body
+    res.status(400).send("Missing data");
+  else {
+    const file = req.files["img"] as UploadedFile;
+    file.mv("./static/img/" + file.name, (err) => {
+      if (err) res.status(500).json(err.message);
+      else {
+        let collection = db.collection(currentCollection);
+        collection
+          .insertOne({
+            username: req.body["username"],
+            img: file.name,
+          })
+          .then((data) => res.send(data))
+          .catch((err) => res.status(503).send("QUERY: Syntax error"))
+          .finally(() => req["client"].close());
+      }
+    });
+  }
+});
+
+app.post("/api/uploadBase64", (req, res, next) => {
   let db = req["client"].db(DB_NAME) as mongodb.Db;
   let collection = db.collection(currentCollection);
   collection
-    .insertOne(req["body"])
+    .insertOne(req.body)
     .then((data) => res.send(data))
     .catch((err) => res.status(503).send("QUERY: Syntax error"))
     .finally(() => req["client"].close());

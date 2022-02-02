@@ -35,6 +35,7 @@ function inviaRichiestaMultipart(method, url, formData){
         type: method,
         data:formData,
 		
+        //  indicano a $ajax di non effettuare operazioni sui parametri
 		contentType:false,
 		processData:false,
 		cache:false,
