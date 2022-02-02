@@ -32,7 +32,7 @@ $(document).ready(function() {
 		return;
 	}
 	
-	let form = $("form").get(0)
+	//	simil JSON, per forza inviato nel body
 	let formData = new FormData();		
 	formData.append('username', username);		
 	formData.append('img', file);		
