@@ -6,6 +6,8 @@ import express from "express";
 import * as mongodb from "mongodb";
 import cors, { CorsOptions } from "cors";
 import fileUpload, { UploadedFile } from "express-fileupload";
+import cloudinary, { UploadApiResponse } from "cloudinary";
+import { environment } from "./environment";
 //#endregion
 
 //#region mongoDB
@@ -20,6 +22,13 @@ const DB_NAME = "5B";
 //#endregion
 
 const PORT: number = parseInt(process.env.PORT) || 1337;
+
+cloudinary.v2.config({
+  cloud_name: environment.CLOUD_NAME,
+  api_key: environment.API_KEY,
+  api_secret: environment.API_SECRET,
+});
+
 const app = express();
 
 const server = http.createServer(app);
@@ -100,6 +109,9 @@ app.use(
   })
 );
 
+//  8. base64 fileUpload
+app.use("/", express.json({ limit: "50mb" }));
+
 /*  ******************************************
     elenco delle routes di risposta al client
     ****************************************** */
@@ -154,6 +166,59 @@ app.post("/api/uploadBase64", (req, res, next) => {
     .then((data) => res.send(data))
     .catch((err) => res.status(503).send("QUERY: Syntax error"))
     .finally(() => req["client"].close());
+});
+
+app.post("/api/cloudinaryBase64", (req, res, next) => {
+  let db = req["client"].db(DB_NAME) as mongodb.Db;
+
+  cloudinary.v2.uploader
+    .upload(req.body["img"], { folder: "ImageUpload" })
+    .then((url: UploadApiResponse) => {
+      let collection = db.collection(currentCollection);
+      collection
+        .insertOne({ username: req.body["username"], img: url.secure_url })
+        .then((data) => res.send(data))
+        .catch((err) => res.status(503).send("QUERY: Syntax error"))
+        .finally(() => req["client"].close());
+    })
+    .catch((err) =>
+      res.status(500).send("CLOUDINARY: error during image uploading")
+    );
+});
+
+app.post("/api/cloudinaryBinary", (req, res, next) => {
+  let db = req["client"].db(DB_NAME) as mongodb.Db;
+  if (
+    !req.files ||
+    Object.keys(req.files).length === 0 ||
+    !req.body["username"]
+  )
+    //  parametri "normali" vengono inseriti nel body
+    res.status(400).send("Missing data");
+  else {
+    const file = req.files["img"] as UploadedFile;
+    file.mv("./static/img/" + file.name, (err) => {
+      if (err) res.status(500).json(err.message);
+      else {
+        cloudinary.v2.uploader
+          .upload(`./static/img/${file.name}`, {
+            folder: "ImageUpload",
+            use_filename: true,
+          })
+          .then((url: UploadApiResponse) => {
+            let collection = db.collection(currentCollection);
+            collection
+              .insertOne({ username: req.body["username"], img: file.name })
+              .then((data) => res.send(data))
+              .catch((err) => res.status(503).send("QUERY: Syntax error"))
+              .finally(() => req["client"].close());
+          })
+          .catch((err) =>
+            res.status(500).send("CLOUDINARY: error during image uploading")
+          );
+      }
+    });
+  }
 });
 
 /*  ******************************************
