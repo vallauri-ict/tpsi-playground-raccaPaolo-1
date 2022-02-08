@@ -198,6 +198,11 @@ app.put("/api/*", (req, res, next) => {
 /*  ******************************************
     default route e route di gestione degli errori
     ****************************************** */
+app.use("/", (req, res, next) => {
+  res.status(400);
+  res.send("Risorsa non trovata");
+});
+
 app.use("/", (err, req, res, next) => {
   console.log("**** ERRORE SERVER ***** " + err); //  da correggere
 });
