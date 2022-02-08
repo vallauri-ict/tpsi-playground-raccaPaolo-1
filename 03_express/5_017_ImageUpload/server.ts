@@ -13,8 +13,7 @@ import { environment } from "./environment";
 //#region mongoDB
 const mongoClient = mongodb.MongoClient;
 const CONNECTION_STRING =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://admin:admin@cluster0.niwz6.mongodb.net/5B?retryWrites=true&w=majority";
+  process.env.MONGODB_URI || environment.DB_CONNECTION_STRING;
 // const CONNECTION_STRING = "mongodb://127.0.0.1:27017";
 // const CONNECTION_STRING =
 //   "mongodb+srv://admin:admin@cluster0.niwz6.mongodb.net/5B?retryWrites=true&w=majority";
@@ -24,9 +23,9 @@ const DB_NAME = "5B";
 const PORT: number = parseInt(process.env.PORT) || 1337;
 
 cloudinary.v2.config({
-  cloud_name: environment.CLOUD_NAME,
-  api_key: environment.API_KEY,
-  api_secret: environment.API_SECRET,
+  cloud_name: environment.CLOUDINARY.CLOUD_NAME,
+  api_key: environment.CLOUDINARY.API_KEY,
+  api_secret: environment.CLOUDINARY.API_SECRET,
 });
 
 const app = express();
@@ -102,15 +101,15 @@ const corsOptions: CorsOptions = {
 };
 app.use("/", cors(corsOptions));
 
-//  7. Controllo dimensione dei file
-// app.use(
-//   fileUpload({
-//     limits: { fileSize: 10 * 1024 * 1024 }, //  10MB
-//   })
-// );
+//7. Controllo dimensione dei file
+app.use(
+  fileUpload({
+    limits: { fileSize: 10 * 1024 * 1024 }, //  10MB
+  })
+);
 
 //  8. base64 fileUpload
-app.use("/", express.json({ limit: "50mb" }));
+// app.use("/", express.json({ limit: "50mb" }));
 
 /*  ******************************************
     elenco delle routes di risposta al client
@@ -173,10 +172,10 @@ app.post("/api/cloudinaryBase64", (req, res, next) => {
 
   cloudinary.v2.uploader
     .upload(req.body["img"], { folder: "ImageUpload" })
-    .then((url: UploadApiResponse) => {
+    .then(({ secure_url }: UploadApiResponse) => {
       let collection = db.collection(currentCollection);
       collection
-        .insertOne({ username: req.body["username"], img: url.secure_url })
+        .insertOne({ username: req.body["username"], img: secure_url })
         .then((data) => res.send(data))
         .catch((err) => res.status(503).send("QUERY: Syntax error"))
         .finally(() => req["client"].close());
@@ -188,6 +187,7 @@ app.post("/api/cloudinaryBase64", (req, res, next) => {
 
 app.post("/api/cloudinaryBinary", (req, res, next) => {
   let db = req["client"].db(DB_NAME) as mongodb.Db;
+  console.log(req.files);
   if (
     !req.files ||
     Object.keys(req.files).length === 0 ||
@@ -205,10 +205,10 @@ app.post("/api/cloudinaryBinary", (req, res, next) => {
             folder: "ImageUpload",
             use_filename: true,
           })
-          .then((url: UploadApiResponse) => {
+          .then(({ secure_url }: UploadApiResponse) => {
             let collection = db.collection(currentCollection);
             collection
-              .insertOne({ username: req.body["username"], img: url.secure_url })
+              .insertOne({ username: req.body["username"], img: secure_url })
               .then((data) => res.send(data))
               .catch((err) => res.status(503).send("QUERY: Syntax error"))
               .finally(() => req["client"].close());
