@@ -59,9 +59,9 @@ app.use("/", (req, res, next) => {
 //  2. Static route
 app.use("/", express.static("./static")); //  next fa in automatico
 
-//  3. Route lettura paramentri post
-app.use("/", bodyParser.json());
-app.use("/", bodyParser.urlencoded({ extended: true }));
+//  3. Route lettura paramentri post e impostazione del limite per le immagini base64
+app.use("/", bodyParser.json({ limit: "10mb" }));
+app.use("/", bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
 //  4. Log dei parametri
 app.use("/", (req, res, next) => {
@@ -103,11 +103,11 @@ const corsOptions: CorsOptions = {
 app.use("/", cors(corsOptions));
 
 //  7. Controllo dimensione dei file
-app.use(
-  fileUpload({
-    limits: { fileSize: 10 * 1024 * 1024 }, //  10MB
-  })
-);
+// app.use(
+//   fileUpload({
+//     limits: { fileSize: 10 * 1024 * 1024 }, //  10MB
+//   })
+// );
 
 //  8. base64 fileUpload
 app.use("/", express.json({ limit: "50mb" }));
@@ -208,7 +208,7 @@ app.post("/api/cloudinaryBinary", (req, res, next) => {
           .then((url: UploadApiResponse) => {
             let collection = db.collection(currentCollection);
             collection
-              .insertOne({ username: req.body["username"], img: file.name })
+              .insertOne({ username: req.body["username"], img: url.secure_url })
               .then((data) => res.send(data))
               .catch((err) => res.status(503).send("QUERY: Syntax error"))
               .finally(() => req["client"].close());
@@ -224,6 +224,11 @@ app.post("/api/cloudinaryBinary", (req, res, next) => {
 /*  ******************************************
     default route e route di gestione degli errori
     ****************************************** */
+app.use("/", (req, res, next) => {
+  res.status(400);
+  res.send("Risorsa non trovata");
+});
+
 app.use("/", (err, req, res, next) => {
   console.log("**** ERRORE SERVER ***** " + err); //  da correggere
 });

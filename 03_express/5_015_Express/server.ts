@@ -122,6 +122,11 @@ app.get("/api/risorsa3/:gender/:hair", (req, res, next) => {
     default route e route di gestione degli errori
     ****************************************** */
 app.use("/", (req, res, next) => {
+  res.status(400);
+  res.send("Risorsa non trovata");
+});
+
+app.use("/", (req, res, next) => {
   res.status(404);
   if (req.originalUrl.startsWith("/api/")) res.send("Servizio non trovato");
   else res.send(paginaErrore);
