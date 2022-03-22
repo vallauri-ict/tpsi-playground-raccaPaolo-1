@@ -77,6 +77,7 @@ const whitelist = [
   "http://raccapaolo-crudserver.herokuapp.com",
   "http://localhost:1337",
   "http://localhost:4200",
+  "https://my-recipes-310821.web.app"
 ];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -96,7 +97,6 @@ app.use("/", cors(corsOptions));
     elenco delle routes di risposta al client
     ****************************************** */
 
-//  middleware di intercettazione dei parametri
 let currentCollection: string = "";
 let id: string = "";
 
@@ -109,8 +109,7 @@ app.use("/api/:collection/:id?", (req, res, next) => {
 //  lettura delle collezioni presenti nel db
 app.get("/api/getCollections", (req, res, next) => {
   let db = req["client"].db(DB_NAME) as mongodb.Db;
-  let collections = db
-    .listCollections()
+  db.listCollections()
     .toArray()
     .then((data) => res.send(data))
     .catch((err) => res.status(503).send("QUERY: Syntax error"))
@@ -198,11 +197,15 @@ app.put("/api/*", (req, res, next) => {
 /*  ******************************************
     default route e route di gestione degli errori
     ****************************************** */
-app.use("/", (req, res, next) => {
-  res.status(400);
-  res.send("Risorsa non trovata");
+app.use("/", (req, res) => {
+  res.status(404);
+  if (req.originalUrl.startsWith("/api/")) {
+    res.send("Risorsa non trovata");
+  } else {
+    res.send(paginaErrore);
+  }
 });
 
-app.use("/", (err, req, res, next) => {
+app.use((err, req, res, next) => {
   console.log("**** ERRORE SERVER ***** " + err); //  da correggere
 });
